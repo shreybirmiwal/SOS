@@ -1,8 +1,12 @@
 const express = require("express");
 const PORT = process.env.PORT || 3001;
 const app = express();
+require("dotenv").config();
+const OpenAI = require("openai");
+
 app.use(express.json());
 
+//const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
 // Sample Data
 // POST / your - endpoint ? session_id = abc123 & uid=user123
@@ -35,7 +39,7 @@ app.post("/api", async (req, res) => {
     var danger = false;
     if (full_convo.includes("sos")) {
         test = "    " + test + "SOS DETECTED";
-        contactAuthorities();
+        await contactAuthorities(full_convo);
     }
     else {
         test = "   " + test + "USER is SAFE";
@@ -57,15 +61,19 @@ app.listen(PORT, () => {
 
 
 //Helper Functions
-const contactAuthorities = (full_convo) => {
+const contactAuthorities = async (full_convo) => {
     console.log("Contacting Authorities:");
 
     var location = getLocation();
-    var details = getDetails(full_convo);
+    var details = await getDetails(full_convo);
+    var sendTo = getContacts();
+
+
     console.log("\n #################")
     console.log("Sending sms to authorities");
     console.log(location);
     console.log(details);
+    console.log(sendTo);
     console.log("################# \n")
 
 
@@ -81,7 +89,6 @@ const contactAuthorities = (full_convo) => {
 }
 
 
-
 const getLocation = () => {
     var location = {
         latitude: 37.7749,
@@ -90,7 +97,19 @@ const getLocation = () => {
     return location;
 }
 
-const getDetails = (full_convo) => {
-    return "LOL";
+const getDetails = async (full_convo) => {
+
+
+    return "Details here .. saving gpt credits";
+
+    // const completion = await openai.chat.completions.create({
+    //     model: "gpt-4o-mini",
+    //     messages: [{ role: "system", content: "You are to analyze this conversation and find context clues. The user is in danger. This conversation is fragmented, but we need to figure out what the exact danger is, or any information that can help save/rescue/aid the user. Please find out as much details as you can, whilst answering in the most consise way possible. Use as few words as possible for your answer, by providing only information that is useful to helping save the person." }, { role: "user", content: full_convo }],
+    // });
+    // return completion.choices[0].message;
 }
 
+const getContacts = () => {
+    var contacts = ["+18777804236", "+18777804236"];
+    return contacts;
+}
