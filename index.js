@@ -77,6 +77,9 @@ const contactAuthorities = async (full_convo) => {
     console.log("################# \n")
 
 
+    //put the output somewhere readable
+
+
     // //send smd
     // client.messages
     //     .create({
