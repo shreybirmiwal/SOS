@@ -51,7 +51,7 @@ app.post("/api", async (req, res) => {
     var danger = false;
     if (full_convo.includes("sos")) {
         test = "    " + test + "SOS DETECTED";
-        await contactAuthorities(full_convo, uid);
+        await contactAuthorities(segments, full_convo, uid);
     }
     else {
         test = "   " + test + "USER is SAFE";
@@ -97,9 +97,9 @@ app.listen(PORT, () => {
 
 
 //Helper Functions
-const contactAuthorities = async (full_convo, uid) => {
+const contactAuthorities = async (segments, full_convo, uid) => {
 
-    var location = getLocation();
+    var location = getLocation(segments);
     var details = await getDetails(full_convo);
     var sendTo = await getContacts(uid);
 
@@ -117,21 +117,22 @@ const contactAuthorities = async (full_convo, uid) => {
 
     // //send smd
     //future: add feature to send to multiple contacts, include user name in messagelokl
-    client.messages
-        .create({
-            body: `User in danger. Location: ${location.latitude}, ${location.longitude}. ${details}`,
-            from: '+18888647569',
-            to: sendTo
-        })
-        .then(message => console.log(message.sid))
-        .catch(error => console.error('Error sending SMS:', error));
+    // client.messages
+    //     .create({
+    //         body: `User in danger. Location: ${location.latitude}, ${location.longitude}. ${details}`,
+    //         from: '+18888647569',
+    //         to: sendTo
+    //     })
+    //     .then(message => console.log(message.sid))
+    //     .catch(error => console.error('Error sending SMS:', error));
 }
 
 
-const getLocation = () => {
+const getLocation = (segments) => {
+
     var location = {
-        latitude: 37.7749,
-        longitude: -122.4194
+        latitude: segments.geolocation.latitude,
+        longitude: segments.geolocation.longitude
     };
     return location;
 }
