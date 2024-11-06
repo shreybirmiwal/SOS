@@ -11,6 +11,13 @@ app.use(express.json());
 app.use(cors());
 
 
+//TWILIO
+const twilio = require("twilio");
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
+
+//openai
 const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
 // Sample Data
@@ -109,14 +116,15 @@ const contactAuthorities = async (full_convo, uid) => {
 
 
     // //send smd
-    // client.messages
-    //     .create({
-    //         body: 'Hello from Twilio',
-    //         from: '+18888647569',
-    //         to: '+18777804236'
-    //     })
-    //     .then(message => console.log(message.sid))
-    //     .done();
+    //future: add feature to send to multiple contacts, include user name in messagelokl
+    client.messages
+        .create({
+            body: `User in danger. Location: ${location.latitude}, ${location.longitude}. ${details}`,
+            from: '+18888647569',
+            to: sendTo
+        })
+        .then(message => console.log(message.sid))
+        .catch(error => console.error('Error sending SMS:', error));
 }
 
 
