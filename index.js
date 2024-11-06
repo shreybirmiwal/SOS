@@ -36,28 +36,37 @@ const openai = new OpenAI(); // API Key is stored in .env file automatically pul
 // ]
 
 app.post("/api", async (req, res) => {
-    const { session_id, uid } = req.query;
+    const { uid } = req.query;
     const segments = req.body;
-    var test = "session id" + session_id + "uid" + uid;
+    var test = "uid" + uid;
+
+    //console.log("Segments", segments);
+    console.log("test", test);
 
     //console.log(segments);
     var full_convo = "";
 
-    for (var i = 0; i < segments.length; i++) {
-        full_convo += segments[i].text + " ";
+    var segs = segments.transcript_segments
+    for (var i = 0; i < segs.length; i++) {
+        full_convo += segs[i].text + " ";
     }
     full_convo = full_convo.toLowerCase();
+    console.log("Full Convo", full_convo);
 
-    var danger = false;
-    if (full_convo.includes("sos")) {
+    //sos should only be detected if it is alone, not in a word
+    const sosRegex = /\bsos\b/;
+    if (sosRegex.test(full_convo)) {
+
+        console.log("SOS DETECTED");
         test = "    " + test + "SOS DETECTED";
         await contactAuthorities(segments, full_convo, uid);
+
     }
     else {
         test = "   " + test + "USER is SAFE";
+        res.json({ message: "" });
     }
 
-    res.json({ message: test });
 });
 
 
@@ -125,6 +134,10 @@ const contactAuthorities = async (segments, full_convo, uid) => {
     //     })
     //     .then(message => console.log(message.sid))
     //     .catch(error => console.error('Error sending SMS:', error));
+
+
+    res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
+
 }
 
 
@@ -140,7 +153,7 @@ const getLocation = (segments) => {
 const getDetails = async (full_convo) => {
 
 
-    // return "Details here .. saving gpt credits";
+    return "Details here .. saving gpt credits";
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
