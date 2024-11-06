@@ -1,10 +1,15 @@
 const express = require("express");
+const cors = require("cors");
+const User = require("./config");
+
 const PORT = process.env.PORT || 3001;
 const app = express();
 require("dotenv").config();
 const OpenAI = require("openai");
 
 app.use(express.json());
+app.use(cors());
+
 
 //const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
@@ -48,6 +53,30 @@ app.post("/api", async (req, res) => {
     res.json({ message: test });
 });
 
+
+//setup_completed_url returns true if user has setup
+app.get("/setup_completed_url", async (req, res) => {
+    const { uid } = req.query;
+
+    if (!uid) {
+        return res.status(400).json({ error: "UID is required" });
+    }
+
+    // Get user document
+    const snapshot = await User.get();
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    //console.log("List", list);
+    const user = list.find((user) => user.id === uid);
+
+    console.log(user);
+
+    if (!user) {
+        return res.json({ is_setup_completed: false });
+    }
+
+    return res.json({ is_setup_completed: true });
+
+});
 
 app.get("/hello", (req, res) => {
     res.json({ message: "Hello from Express!" });
