@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(cors());
 
 
-//const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
+const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
 // Sample Data
 // POST / your - endpoint ? session_id = abc123 & uid=user123
@@ -131,13 +131,13 @@ const getLocation = () => {
 const getDetails = async (full_convo) => {
 
 
-    return "Details here .. saving gpt credits";
+    // return "Details here .. saving gpt credits";
 
-    // const completion = await openai.chat.completions.create({
-    //     model: "gpt-4o-mini",
-    //     messages: [{ role: "system", content: "You are to analyze this conversation and find context clues. The user is in danger. This conversation is fragmented, but we need to figure out what the exact danger is, or any information that can help save/rescue/aid the user. Please find out as much details as you can, whilst answering in the most consise way possible. Use as few words as possible for your answer, by providing only information that is useful to helping save the person." }, { role: "user", content: full_convo }],
-    // });
-    // return completion.choices[0].message;
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: "You are to analyze this conversation and find context clues. The user is in danger. This conversation is fragmented, but we need to figure out what the exact danger is, or any information that can help save/rescue/aid the user. Please find out as much details as you can, whilst answering in the most consise way possible. Use as few words as possible for your answer, by providing only information that is useful to helping save the person." }, { role: "user", content: full_convo }],
+    });
+    return completion.choices[0].message.content;
 }
 
 const getContacts = async (uid) => {
