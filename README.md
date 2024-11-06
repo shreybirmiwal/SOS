@@ -1,9 +1,9 @@
 # SOS
 
 
-- authentication page: https://sos-auth.vercel.app/
-- send JSON payloads here: https://sos-orcin.vercel.app/api
-- check if user auth here: https://sos-orcin.vercel.app/setup_completed_url
+- authentication page: https://sos-auth.vercel.app/               (DONE)
+- send JSON payloads here: https://sos-orcin.vercel.app/api           ()
+- check if user auth here: https://sos-orcin.vercel.app/setup_completed_url     (DONE)
 
 
 

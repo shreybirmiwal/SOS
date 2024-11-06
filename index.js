@@ -44,7 +44,7 @@ app.post("/api", async (req, res) => {
     var danger = false;
     if (full_convo.includes("sos")) {
         test = "    " + test + "SOS DETECTED";
-        await contactAuthorities(full_convo);
+        await contactAuthorities(full_convo, uid);
     }
     else {
         test = "   " + test + "USER is SAFE";
@@ -90,12 +90,11 @@ app.listen(PORT, () => {
 
 
 //Helper Functions
-const contactAuthorities = async (full_convo) => {
-    console.log("Contacting Authorities:");
+const contactAuthorities = async (full_convo, uid) => {
 
     var location = getLocation();
     var details = await getDetails(full_convo);
-    var sendTo = getContacts();
+    var sendTo = await getContacts(uid);
 
 
     console.log("\n #################")
@@ -141,7 +140,22 @@ const getDetails = async (full_convo) => {
     // return completion.choices[0].message;
 }
 
-const getContacts = () => {
-    var contacts = ["+18777804236", "+18777804236"];
-    return contacts;
+const getContacts = async (uid) => {
+
+    //console.log("LOOKING FOR UID", uid);
+
+    // Get user document
+    const snapshot = await User.get();
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    //console.log("List", list);
+    const user = list.find((user) => user.id === uid);
+
+    console.log(user);
+
+    if (!user) {
+        return -1;
+    }
+
+    return user.emergencyContacts[0]; //only first contact for now
+
 }
