@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import 'tailwindcss/tailwind.css';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 function App() {
   const uid = new URLSearchParams(window.location.search).get('uid');
 
   const [contact, setContact] = useState('');
+  const [provider, setProvider] = useState('');
   const [savedContact, setSavedContact] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch existing contact if it exists
     if (uid) {
       const fetchContact = async () => {
         setLoading(true);
@@ -22,6 +21,7 @@ function App() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setSavedContact(data.emergencyContacts ? data.emergencyContacts[0] : null);
+          setProvider(data.provider || '');
         }
         setLoading(false);
       };
@@ -30,26 +30,27 @@ function App() {
   }, [uid]);
 
   const handleSaveContact = async () => {
-    if (!contact || !uid) return;
+    if (!contact || !provider || !uid) return;
 
     try {
       const userRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
-        // If user document exists, update it
         await updateDoc(userRef, {
           emergencyContacts: [contact],
+          provider: provider,
         });
       } else {
-        // If user document does not exist, create it
         await setDoc(userRef, {
           emergencyContacts: [contact],
+          provider: provider,
         });
       }
 
       setSavedContact(contact);
       setContact('');
+      setProvider('');
     } catch (error) {
       console.error("Error saving emergency contact:", error);
     }
@@ -87,12 +88,34 @@ function App() {
               />
             </div>
 
+            <div className="mt-4">
+              <label htmlFor="provider" className="block text-sm font-medium text-gray-700">
+                Provider
+              </label>
+              <select
+                id="provider"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+              >
+                <option value="" disabled>Select a provider</option>
+                <option value="verizon">Verizon</option>
+                <option value="att">AT&T</option>
+                <option value="tmobile">T-Mobile</option>
+                <option value="sprint">Sprint</option>
+              </select>
+            </div>
+
             <button
               className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition"
               onClick={handleSaveContact}
             >
               Save Contact
             </button>
+
+            <p className="mt-4 text-center text-gray-500">
+              Soon we will use an actual messaging API... it will be more streamlined. You will be able to add multiple phone numbers, no need for providers, etc.
+            </p>
           </div>
         )}
       </div>
