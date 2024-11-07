@@ -6,34 +6,33 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 require("dotenv").config();
 const OpenAI = require("openai");
+const nodemailer = require('nodemailer');
+require("dotenv").config();
 
 app.use(express.json());
 app.use(cors());
 
 
-//TWILIO
-const twilio = require("twilio");
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = twilio(accountSid, authToken);
+//email message 
+const carrierGateways = {
+    'verizon': '@vtext.com',
+    'att': '@txt.att.net',
+    'tmobile': '@tmomail.net',
+    'sprint': '@messaging.sprintpcs.com',
+};
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: 'birmiwalshrey@gmail.com',
+        pass: process.env.EMAIL_KEY,
+    },
+});
+
+
 
 //openai
 const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
-// Sample Data
-// POST / your - endpoint ? session_id = abc123 & uid=user123
-
-// [
-//     {
-//         "text": "Segment text",
-//         "speaker": "SPEAKER_00",
-//         "speakerId": 0,
-//         "is_user": false,
-//         "start": 10.0,
-//         "end": 20.0
-//     }
-//     // More recent segments...
-// ]
 
 app.post("/api", async (req, res) => {
     const { uid } = req.query;
@@ -110,8 +109,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
 
     var location = getLocation(segments);
     var details = await getDetails(full_convo);
-    var sendTo = await getContacts(uid);
-
+    var { emergencyContact: sendTo, provider } = await getContacts(uid);
 
     console.log("\n #################")
     console.log("Sending sms to authorities");
@@ -120,21 +118,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
     console.log(sendTo);
     console.log("################# \n")
 
-
-    //put the output somewhere readable
-
-
-    // //send smd
-    //future: add feature to send to multiple contacts, include user name in messagelokl
-    // client.messages
-    //     .create({
-    //         body: `User in danger. Location: ${location.latitude}, ${location.longitude}. ${details}`,
-    //         from: '+18888647569',
-    //         to: sendTo
-    //     })
-    //     .then(message => console.log(message.sid))
-    //     .catch(error => console.error('Error sending SMS:', error));
-
+    sendMessage(sendTo, provider, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
 
     res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
 
@@ -157,7 +141,7 @@ const getLocation = (segments) => {
 const getDetails = async (full_convo) => {
 
 
-    return "Details here .. saving gpt credits";
+    //return "Details here .. saving gpt credits";
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -182,6 +166,35 @@ const getContacts = async (uid) => {
         return -1;
     }
 
-    return user.emergencyContacts[0]; //only first contact for now
+    var emergencyContact = user.emergencyContacts[0];
+    var provider = user.provider;
 
+    return { emergencyContact, provider } //only first contact for now
+
+}
+
+
+const sendMessage = async (phoneNumber, carrier, message, res) => {
+
+    const carrierGateway = carrierGateways[carrier.toLowerCase()];
+    if (!carrierGateway) {
+        return res.status(400).json({ error: 'Unsupported carrier.' });
+    }
+
+    const recipientEmail = `${phoneNumber}${carrierGateway}`;
+
+    const mailOptions = {
+        from: 'birmiwalshrey@gmail.com',
+        to: recipientEmail,
+        subject: 'SOS DETECTED!',
+        text: message,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return
+    } catch (error) {
+        console.error('Error sending SMS:', error);
+        return
+    }
 }
