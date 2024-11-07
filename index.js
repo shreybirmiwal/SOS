@@ -6,34 +6,17 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 require("dotenv").config();
 const OpenAI = require("openai");
+const nodemailer = require('nodemailer');
+
 
 app.use(express.json());
 app.use(cors());
 
 
-//TWILIO
-const twilio = require("twilio");
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = twilio(accountSid, authToken);
 
 //openai
 const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
 
-// Sample Data
-// POST / your - endpoint ? session_id = abc123 & uid=user123
-
-// [
-//     {
-//         "text": "Segment text",
-//         "speaker": "SPEAKER_00",
-//         "speakerId": 0,
-//         "is_user": false,
-//         "start": 10.0,
-//         "end": 20.0
-//     }
-//     // More recent segments...
-// ]
 
 app.post("/api", async (req, res) => {
     const { uid } = req.query;
@@ -121,19 +104,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
     console.log("################# \n")
 
 
-    //put the output somewhere readable
 
-
-    // //send smd
-    //future: add feature to send to multiple contacts, include user name in messagelokl
-    // client.messages
-    //     .create({
-    //         body: `User in danger. Location: ${location.latitude}, ${location.longitude}. ${details}`,
-    //         from: '+18888647569',
-    //         to: sendTo
-    //     })
-    //     .then(message => console.log(message.sid))
-    //     .catch(error => console.error('Error sending SMS:', error));
 
 
     res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
