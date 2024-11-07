@@ -1,4 +1,4 @@
-<img src=SOS-banner.png>
+<img src='assets/SOS-banner.png'>
 SOS is the life-saving OMI AI wearable app. When SOS detects you are in a dangerous situation (Say "SOS"), it will contact the authorities with your location & context, to get you help ASAP.
 
 ## Demo
