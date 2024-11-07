@@ -7,7 +7,7 @@ const app = express();
 require("dotenv").config();
 const OpenAI = require("openai");
 const nodemailer = require('nodemailer');
-
+require("dotenv").config();
 
 app.use(express.json());
 app.use(cors());
@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
         user: 'birmiwalshrey@gmail.com',
-        pass: 'szkm vkkh axuy srah',
+        pass: process.env.EMAIL_KEY,
     },
 });
 
@@ -109,8 +109,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
 
     var location = getLocation(segments);
     var details = await getDetails(full_convo);
-    var sendTo = await getContacts(uid);
-
+    var { emergencyContact: sendTo, provider } = await getContacts(uid);
 
     console.log("\n #################")
     console.log("Sending sms to authorities");
@@ -119,7 +118,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
     console.log(sendTo);
     console.log("################# \n")
 
-    sendMessage(sendTo, "tmobile", `SOS detected Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
+    sendMessage(sendTo, provider, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
 
     res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
 
@@ -142,7 +141,7 @@ const getLocation = (segments) => {
 const getDetails = async (full_convo) => {
 
 
-    return "Details here .. saving gpt credits";
+    //return "Details here .. saving gpt credits";
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -167,7 +166,10 @@ const getContacts = async (uid) => {
         return -1;
     }
 
-    return user.emergencyContacts[0]; //only first contact for now
+    var emergencyContact = user.emergencyContacts[0];
+    var provider = user.provider;
+
+    return { emergencyContact, provider } //only first contact for now
 
 }
 
@@ -184,7 +186,7 @@ const sendMessage = async (phoneNumber, carrier, message, res) => {
     const mailOptions = {
         from: 'birmiwalshrey@gmail.com',
         to: recipientEmail,
-        subject: '',
+        subject: 'SOS DETECTED!',
         text: message,
     };
 
