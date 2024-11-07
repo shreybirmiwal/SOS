@@ -21,7 +21,7 @@ Note that sos-auth URL will have user UID appended
 ```
 # Setting Up SOS
 
-1. Follow authentication steps
+1. Follow authentication steps below
 2. When in situations of dangers, say "SOS"
 3. When the memory is created, it will notice the SOS, and contact your emergency contact
 
@@ -43,23 +43,37 @@ Note that sos-auth URL will have user UID appended
 
 ## Omi Plugin Published Details
 ```
-{
+  {
     "id": "SOS",
     "name": "SOS-Emergency Help",
     "author": "Shrey Birmiwal",
     "description": "Alerts authorities and emergency contacts if OMI detects you are in danger. Say 'SOS' and OMI will send your location and context to get you help ASAP.",
-    "image": "/apps/logos/your-app-logo.jpg",
+    "image": "/plugins/logos/SOS-logo.png",
     "capabilities": [
-        "external_integration"
+      "external_integration"
     ],
     "external_integration": {
-        "triggers_on": "memory_creation",
-        "webhook_url": "https://sos-orcin.vercel.app/api",
-        "setup_completed_url": "https://sos-orcin.vercel.app/setup_completed_url",
-        "setup_instructions_file_path": "/apps/instructions/your-app/README.md"
+      "triggers_on": "memory_creation",
+      "webhook_url": "https://sos-orcin.vercel.app/api",
+      "setup_completed_url": "https://sos-orcin.vercel.app/setup_completed_url",
+      "setup_instructions_file_path": "/plugins/instructions/SOS/README.md"
     },
     "deleted": false
-}
+  }
 ```
 
+
+## Contributing
+We welcome any contributions. Please leave a pull request!
+Make sure to create a .env in the root directory with the following:
+```
+EMAIL_KEY=YOUR_GMAIL_APP_SPECIFIC_PASSWORD_KEY
+OPENAI_API_KEY=YOUR_OPENAI_KEY
+```
+
+**Current File Format:**
+- /sos_frontend : ReactJS front end for the authentication page. Writes user emergency data into firebase
+- config.js : Firebase setup for nodejs
+- index.js : Routes for the api to get webhooks from OMI and return values
+- vercel.json : Just for deployement to vercel for the node.js server
 
