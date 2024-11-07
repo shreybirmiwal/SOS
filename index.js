@@ -13,6 +13,22 @@ app.use(express.json());
 app.use(cors());
 
 
+//email message 
+const carrierGateways = {
+    'verizon': '@vtext.com',
+    'att': '@txt.att.net',
+    'tmobile': '@tmomail.net',
+    'sprint': '@messaging.sprintpcs.com',
+};
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: 'birmiwalshrey@gmail.com',
+        pass: 'szkm vkkh axuy srah',
+    },
+});
+
+
 
 //openai
 const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
@@ -103,9 +119,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
     console.log(sendTo);
     console.log("################# \n")
 
-
-
-
+    sendMessage(sendTo, "tmobile", `SOS detected Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
 
     res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
 
@@ -155,4 +169,30 @@ const getContacts = async (uid) => {
 
     return user.emergencyContacts[0]; //only first contact for now
 
+}
+
+
+const sendMessage = async (phoneNumber, carrier, message, res) => {
+
+    const carrierGateway = carrierGateways[carrier.toLowerCase()];
+    if (!carrierGateway) {
+        return res.status(400).json({ error: 'Unsupported carrier.' });
+    }
+
+    const recipientEmail = `${phoneNumber}${carrierGateway}`;
+
+    const mailOptions = {
+        from: 'birmiwalshrey@gmail.com',
+        to: recipientEmail,
+        subject: '',
+        text: message,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return
+    } catch (error) {
+        console.error('Error sending SMS:', error);
+        return
+    }
 }
