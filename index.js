@@ -41,7 +41,7 @@ app.post("/api", async (req, res) => {
     var test = "uid" + uid;
 
     //console.log("Segments", segments);
-    console.log("test", test);
+    console.log("User UID:", test);
 
     //console.log(segments);
     var full_convo = "";
@@ -51,15 +51,15 @@ app.post("/api", async (req, res) => {
         full_convo += segs[i].text + " ";
     }
     full_convo = full_convo.toLowerCase();
-    console.log("Full Convo", full_convo);
+    console.log("Full Convo ########### \n", full_convo);
+    console.log("########### \n");
 
     //sos should only be detected if it is alone, not in a word
     const sosRegex = /\bsos\b/;
     if (sosRegex.test(full_convo)) {
 
         console.log("SOS DETECTED");
-        test = "    " + test + "SOS DETECTED";
-        await contactAuthorities(segments, full_convo, uid);
+        await contactAuthorities(segments, full_convo, uid, res);
 
     }
     else {
@@ -106,7 +106,7 @@ app.listen(PORT, () => {
 
 
 //Helper Functions
-const contactAuthorities = async (segments, full_convo, uid) => {
+const contactAuthorities = async (segments, full_convo, uid, res) => {
 
     var location = getLocation(segments);
     var details = await getDetails(full_convo);
@@ -142,6 +142,10 @@ const contactAuthorities = async (segments, full_convo, uid) => {
 
 
 const getLocation = (segments) => {
+
+    if (!segments.geolocation) {
+        return { latitude: 0, longitude: 0 };
+    }
 
     var location = {
         latitude: segments.geolocation.latitude,
