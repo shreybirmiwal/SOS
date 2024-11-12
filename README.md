@@ -3,6 +3,10 @@ SOS is the life-saving OMI AI wearable app. When SOS detects you are in a danger
 
 ## Demo
 
+
+https://github.com/user-attachments/assets/2c03ca5d-2415-4d6b-a149-4263100b2c58
+
+
 ## Future Improvements
 - Send to multiple contacts, not just 1
 - More reliable send (use Twilio or similar). Currently unstable because using jank solution to get around Twilio cost + verification
