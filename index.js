@@ -13,13 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 
-//email message 
-const carrierGateways = {
-    'verizon': '@vtext.com',
-    'att': '@txt.att.net',
-    'tmobile': '@tmomail.net',
-    'sprint': '@messaging.sprintpcs.com',
-};
+
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -109,7 +103,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
 
     var location = getLocation(segments);
     var details = await getDetails(full_convo);
-    var { emergencyContact: sendTo, provider } = await getContacts(uid);
+    var { emergencyContact: sendTo } = await getContacts(uid);
 
     console.log("\n #################")
     console.log("Sending sms to authorities");
@@ -118,7 +112,7 @@ const contactAuthorities = async (segments, full_convo, uid, res) => {
     console.log(sendTo);
     console.log("################# \n")
 
-    sendMessage(sendTo, provider, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
+    sendMessage(sendTo, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
 
     res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
 
@@ -167,25 +161,17 @@ const getContacts = async (uid) => {
     }
 
     var emergencyContact = user.emergencyContacts[0];
-    var provider = user.provider;
 
-    return { emergencyContact, provider } //only first contact for now
+    return { emergencyContact } //only first contact for now
 
 }
 
 
-const sendMessage = async (phoneNumber, carrier, message, res) => {
-
-    const carrierGateway = carrierGateways[carrier.toLowerCase()];
-    if (!carrierGateway) {
-        return res.status(400).json({ error: 'Unsupported carrier.' });
-    }
-
-    const recipientEmail = `${phoneNumber}${carrierGateway}`;
+const sendMessage = async (sendTo, message, res) => {
 
     const mailOptions = {
         from: 'birmiwalshrey@gmail.com',
-        to: recipientEmail,
+        to: sendTo,
         subject: 'SOS DETECTED!',
         text: message,
     };
