@@ -21,7 +21,14 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_KEY,
     },
 });
-
+// Verify the transporter connection
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('Verification failed:', error);
+    } else {
+        console.log('Server is ready to send messages');
+    }
+});
 
 
 //openai
@@ -177,11 +184,11 @@ const sendMessage = async (sendTo, message, res) => {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
-        return
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', result);
     } catch (error) {
-        console.error('Error sending SMS:', error);
-        return
+        console.error('Error sending email:', error.message);
+        console.error('Full error details:', error);
     }
 }
 
