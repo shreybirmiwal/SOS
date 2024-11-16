@@ -1,18 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const User = require("./config");
+const nodemailer = require('nodemailer');
+require("dotenv").config();
+const OpenAI = require("openai");
 
 const PORT = process.env.PORT || 3001;
 const app = express();
-require("dotenv").config();
-const OpenAI = require("openai");
-const nodemailer = require('nodemailer');
-require("dotenv").config();
 
 app.use(express.json());
 app.use(cors());
-
-
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -21,161 +18,99 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_KEY,
     },
 });
-// Verify the transporter connection
-transporter.verify(function (error, success) {
-    if (error) {
-        console.error('Verification failed:', error);
-    } else {
-        console.log('Server is ready to send messages');
+
+// Verify the transporter connection asynchronously
+const verifyTransporter = async () => {
+    try {
+        await new Promise((resolve, reject) => {
+            transporter.verify((error, success) => {
+                if (error) {
+                    console.error('Verification failed:', error);
+                    reject(error);
+                } else {
+                    console.log('Server is ready to send messages');
+                    resolve(success);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error during transporter verification:', error);
     }
-});
+};
 
+verifyTransporter();
 
-//openai
 const openai = new OpenAI(); // API Key is stored in .env file automatically pulled
-
 
 app.post("/api", async (req, res) => {
     const { uid } = req.query;
     const segments = req.body;
-    var test = "uid" + uid;
+    let test = "uid" + uid;
 
-    //console.log("Segments", segments);
-    console.log("User UID:", test);
+    let full_convo = "";
 
-    //console.log(segments);
-    var full_convo = "";
+    segments.transcript_segments.forEach(segment => {
+        full_convo += segment.text + " ";
+    });
 
-    var segs = segments.transcript_segments
-    for (var i = 0; i < segs.length; i++) {
-        full_convo += segs[i].text + " ";
-    }
     full_convo = full_convo.toLowerCase();
     console.log("Full Convo ########### \n", full_convo);
-    console.log("########### \n");
 
-    //sos should only be detected if it is alone, not in a word
     const sosRegex = /\bsos\b/;
     if (sosRegex.test(full_convo)) {
-
         console.log("SOS DETECTED");
         await contactAuthorities(segments, full_convo, uid, res);
-
-    }
-    else {
+    } else {
         test = "   " + test + "USER is SAFE";
         res.json({ message: "" });
     }
-
 });
 
-
-//setup_completed_url returns true if user has setup
-app.get("/setup_completed_url", async (req, res) => {
-    const { uid } = req.query;
-
-    if (!uid) {
-        return res.status(400).json({ error: "UID is required" });
-    }
-
-    // Get user document
-    const snapshot = await User.get();
-    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    //console.log("List", list);
-    const user = list.find((user) => user.id === uid);
-
-    console.log(user);
-
-    if (!user) {
-        return res.json({ is_setup_completed: false });
-    }
-
-    return res.json({ is_setup_completed: true });
-
-});
-
-app.get("/hello", (req, res) => {
-    res.json({ message: "Hello from Express!" });
-});
-
-
-app.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
-});
-
-
-
-//Helper Functions
 const contactAuthorities = async (segments, full_convo, uid, res) => {
+    const location = getLocation(segments);
+    const details = await getDetails(full_convo);
+    const { emergencyContact: sendTo } = await getContacts(uid);
 
-    var location = getLocation(segments);
-    var details = await getDetails(full_convo);
-    var { emergencyContact: sendTo } = await getContacts(uid);
-
-    console.log("\n #################")
-    console.log("Sending sms to authorities");
+    console.log("\n #################");
+    console.log("Sending email to authorities");
     console.log(location);
     console.log(details);
     console.log(sendTo);
-    console.log("################# \n")
+    console.log("################# \n");
 
-    sendMessage(sendTo, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
-
-    res.json({ message: "SOS detected - emergency contacts messages. Help OTW!" });
-
-}
-
+    try {
+        await sendMessage(sendTo, `SOS: Location: ${location.latitude}, ${location.longitude}. Details: ${details}`, res);
+        res.json({ message: "SOS detected - emergency contacts messaged. Help OTW!" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to send message." });
+    }
+};
 
 const getLocation = (segments) => {
-
-    if (!segments.geolocation) {
-        return { latitude: 0, longitude: 0 };
-    }
-
-    var location = {
+    return segments.geolocation ? {
         latitude: segments.geolocation.latitude,
         longitude: segments.geolocation.longitude
-    };
-    return location;
-}
+    } : { latitude: 0, longitude: 0 };
+};
 
 const getDetails = async (full_convo) => {
-
-
-    //return "Details here .. saving gpt credits";
-
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [{ role: "system", content: "You are to analyze this conversation and find context clues. The user is in danger. This conversation is fragmented, but we need to figure out what the exact danger is, or any information that can help save/rescue/aid the user. Please find out as much details as you can, whilst answering in the most consise way possible. Use as few words as possible for your answer, by providing only information that is useful to helping save the person." }, { role: "user", content: full_convo }],
+        messages: [{ role: "system", content: "You are to analyze this conversation and find context clues. The user is in danger..." }, { role: "user", content: full_convo }],
     });
     return completion.choices[0].message.content;
-}
+};
 
 const getContacts = async (uid) => {
-
-    //console.log("LOOKING FOR UID", uid);
-
-    // Get user document
     const snapshot = await User.get();
-    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    //console.log("List", list);
-    const user = list.find((user) => user.id === uid);
+    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const user = list.find(user => user.id === uid);
 
-    console.log(user);
-
-    if (!user) {
-        return -1;
-    }
-
-    var emergencyContact = user.emergencyContacts[0];
-
-    return { emergencyContact } //only first contact for now
-
-}
-
+    if (!user) return -1;
+    return { emergencyContact: user.emergencyContacts[0] };
+};
 
 const sendMessage = async (sendTo, message, res) => {
-
     const mailOptions = {
         from: 'birmiwalshrey@gmail.com',
         to: sendTo,
@@ -183,14 +118,22 @@ const sendMessage = async (sendTo, message, res) => {
         text: message,
     };
 
-    try {
-        const result = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', result);
-    } catch (error) {
-        console.error('Error sending email:', error.message);
-        console.error('Full error details:', error);
-    }
-}
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (err, info) => {
+            if (err) {
+                console.error('Error sending email:', err);
+                reject(err);
+            } else {
+                console.log('Email sent successfully:', info);
+                resolve(info);
+            }
+        });
+    });
+};
+
+app.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+});
 
 
 
