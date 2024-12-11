@@ -1,4 +1,5 @@
-![itch banner](https://github.com/user-attachments/assets/dbfbeda4-c20b-4b1c-b2b4-d8964dda0260)
+
+![itch banner](https://github.com/user-attachments/assets/2e887309-c182-4101-864c-a992f1c53bc1)
 
 
 SOS is the life-saving OMI AI wearable app. When SOS detects you are in a dangerous situation (Say "SOS"), it will contact the authorities with your location & context, to get you help ASAP.
