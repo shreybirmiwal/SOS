@@ -1,12 +1,13 @@
-<img src='assets/SOS-banner.png'>
-**🏆 WON 1st PLACE: $3,000 CASH and $2,000 to travel to San Fransisco at the OMI hacks hackathon 🏆
-**
+![itch banner](https://github.com/user-attachments/assets/dbfbeda4-c20b-4b1c-b2b4-d8964dda0260)
+
+
 SOS is the life-saving OMI AI wearable app. When SOS detects you are in a dangerous situation (Say "SOS"), it will contact the authorities with your location & context, to get you help ASAP.
 
 ## Demo
 
 https://x.com/shreybirmiwal/status/1857880411767967761 (Click Image)
 [![image](https://github.com/user-attachments/assets/ac88c7af-c86f-47fd-8a68-e76518d739be)](https://x.com/shreybirmiwal/status/1857880411767967761)
+
 
 https://github.com/user-attachments/assets/2c03ca5d-2415-4d6b-a149-4263100b2c58
 
